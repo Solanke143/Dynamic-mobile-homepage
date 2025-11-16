@@ -1,0 +1,100 @@
+Project Files (For WordPress Theme)
+=== style.css ===
+/*
+ Theme Name: Dynamic Mobile Homepage
+ Description: Custom theme for dynamic mobile homepage using ACF
+ Version: 1.0
+*/
+body { margin: 0; padding: 0; font-family: sans-serif; }
+.announcement-bar {
+ background: black;
+ color: white;
+ text-align: center;
+ padding: 10px;
+ font-size: 14px;
+}
+.hero-section {
+ padding: 20px;
+ background-size: cover;
+ background-position: center;
+ color: #111;
+}
+.brand-logos {
+ display: flex;
+ gap: 10px;
+ overflow-x: auto;
+ padding: 10px;
+}
+.brand-logos img {
+ height: 40px;
+}
+.new-arrivals {
+ padding: 20px;
+}
+.card {
+ border: 1px solid #eee;
+ border-radius: 10px;
+ padding: 10px;
+ margin-bottom: 20px;
+}
+.card img {
+ width: 100%;
+ border-radius: 10px;
+}
+=== functions.php ===
+<?php
+function theme_setup() {
+ add_theme_support('title-tag');
+ add_theme_support('custom-logo');
+}
+add_action('after_setup_theme', 'theme_setup');
+function theme_files() {
+ wp_enqueue_style('main', get_stylesheet_uri());
+}
+add_action('wp_enqueue_scripts', 'theme_files');
+?>
+=== front-page.php ===
+<?php get_header(); ?>
+<div class="announcement-bar">
+ <?php the_field('announcement_text'); ?>
+</div>
+<header>
+ <?php the_custom_logo(); ?>
+</header>
+<div class="hero-section" style="background-image:url('<?php echo esc_url(get_field('hero_image')); ?>') <h1><?php the_field('hero_heading'); ?></h1>
+ <p><?php the_field('hero_subheading'); ?></p>
+ <a href="<?php the_field('hero_button_url'); ?>">
+ <?php the_field('hero_button_text'); ?>
+ </a>
+</div>
+<div class="brand-logos">
+<?php if(have_rows('brand_logos')):
+ while(have_rows('brand_logos')): the_row(); ?>
+ <img src="<?php the_sub_field('brand_icon'); ?>">
+<?php endwhile; endif; ?>
+</div>
+<div class="new-arrivals">
+ <h2>New Arrivals</h2>
+<?php
+$cat = get_field('new_arrival_category');
+$args = [
+ 'post_type' => 'product',
+ 'posts_per_page' => 2,
+ 'tax_query' => [[
+ 'taxonomy' => 'product_cat',
+ 'field' => 'term_id',
+ 'terms' => $cat
+ ]]
+];
+$q = new WP_Query($args);
+if($q->have_posts()):
+ while($q->have_posts()): $q->the_post();
+ global $product; ?>
+ <div class="card">
+ <?php echo get_the_post_thumbnail(get_the_ID(), 'medium'); ?>
+ <h3><?php the_title(); ?></h3>
+ <p><?php echo $product->get_price_html(); ?></p>
+ </div>
+<?php endwhile; wp_reset_postdata(); endif; ?>
+</div>
+<?php get_footer(); ?>
